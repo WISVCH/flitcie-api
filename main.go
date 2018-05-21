@@ -20,7 +20,7 @@ func main() {
 		})
 	})
 	r.GET("/boards", func(c *gin.Context) {
-		boards, err := listFiles(basePath)
+		boards, err := listFiles(basePath, true)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -32,7 +32,7 @@ func main() {
 		board := c.Param("board")
 		boardPath := filepath.Join(basePath, filepath.FromSlash(path.Clean("/"+board)))
 
-		albums, err := listFiles(boardPath)
+		albums, err := listFiles(boardPath, false)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -45,7 +45,7 @@ func main() {
 		album := c.Param("album")
 		albumPath := filepath.Join(basePath, filepath.FromSlash(path.Clean("/"+board)), filepath.FromSlash(path.Clean("/"+album)))
 
-		photos, err := listFiles(albumPath)
+		photos, err := listFiles(albumPath, false)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -67,17 +67,21 @@ func main() {
 	r.Run() // listen and serve on 0.0.0.0:8080
 }
 
-func listFiles(path string) ([]map[string]interface{}, error) {
+func listFiles(path string, reverse bool) ([]map[string]interface{}, error) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
 
 	fileNames := make([]map[string]interface{}, len(files))
-	for i, f := range files {
-		fileNames[i] = gin.H{
-			"title": f.Name(),
-			"path":  url.PathEscape(f.Name()),
+	for i := range files {
+		j := i
+		if reverse {
+			j = len(files) - 1 - i
+		}
+		fileNames[j] = gin.H{
+			"title": files[i].Name(),
+			"path":  url.PathEscape(files[i].Name()),
 		}
 	}
 	return fileNames, nil
