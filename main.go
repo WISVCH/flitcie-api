@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
-	"net/url"
 	"os"
 	"github.com/gin-contrib/cors"
 )
@@ -20,7 +19,7 @@ func main() {
 		})
 	})
 	r.GET("/boards", func(c *gin.Context) {
-		boards, err := listFiles(basePath, true)
+		boards, err := listFiles(basePath,"boards", true)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -31,8 +30,10 @@ func main() {
 	r.GET("/boards/:board", func(c *gin.Context) {
 		board := c.Param("board")
 		boardPath := filepath.Join(basePath, filepath.FromSlash(path.Clean("/"+board)))
+		prefix, _ := filepath.Rel(basePath, boardPath)
+		prefix = "boards/" + prefix
 
-		albums, err := listFiles(boardPath, false)
+		albums, err := listFiles(boardPath, prefix, false)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -44,8 +45,10 @@ func main() {
 		board := c.Param("board")
 		album := c.Param("album")
 		albumPath := filepath.Join(basePath, filepath.FromSlash(path.Clean("/"+board)), filepath.FromSlash(path.Clean("/"+album)))
+		prefix, _ := filepath.Rel(basePath, albumPath)
+		prefix = "boards/" + prefix
 
-		photos, err := listFiles(albumPath, false)
+		photos, err := listFiles(albumPath, prefix, false)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -67,7 +70,7 @@ func main() {
 	r.Run() // listen and serve on 0.0.0.0:8080
 }
 
-func listFiles(path string, reverse bool) ([]map[string]interface{}, error) {
+func listFiles(path string, prefix string, reverse bool) ([]map[string]interface{}, error) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, err
@@ -81,7 +84,7 @@ func listFiles(path string, reverse bool) ([]map[string]interface{}, error) {
 		}
 		fileNames[j] = gin.H{
 			"title": files[i].Name(),
-			"path":  url.PathEscape(files[i].Name()),
+			"path":  prefix + "/" + files[i].Name(),
 		}
 	}
 	return fileNames, nil
