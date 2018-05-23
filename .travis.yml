@@ -1,5 +1,3 @@
 language: generic
-services:
-- docker
 script:
-- docker build --no-cache --pull
+- docker build --no-cache --pull .
