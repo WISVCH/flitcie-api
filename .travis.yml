@@ -1,3 +1,5 @@
-language: go
-go:
-- "1.10"
+language: generic
+services:
+- docker
+script:
+- docker build --no-cache --pull
